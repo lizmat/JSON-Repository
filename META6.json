@@ -1,0 +1,26 @@
+{
+  "auth": "zef:lizmat",
+  "authors": [
+    "Elizabeth Mattijsen"
+  ],
+  "depends": [
+  ],
+  "description": "Representation of a repository event",
+  "license": "Artistic-2.0",
+  "name": "JSON::Repository",
+  "provides": {
+    "JSON::Repository": "lib/JSON/Repository.rakumod"
+  },
+  "raku": "6.d",
+  "support": {
+    "bugtracker": "https://codeberg.org/lizmat/JSON-Repository/issues",
+    "email": "liz@raku.rocks",
+    "source": "https://codeberg.org/lizmat/JSON-Repository.git"
+  },
+  "tags": [
+    "JSON",
+    "REPOSITORY",
+    "EVENT"
+  ],
+  "version": "0.0.1"
+}

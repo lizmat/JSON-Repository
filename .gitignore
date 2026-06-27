@@ -1,0 +1,5 @@
+.precomp/
+/JSON-Repository-*
+/releases
+*.rakucov
+*.json
