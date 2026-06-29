@@ -50,7 +50,7 @@ class JSON::RepositoryEvent is Map {
           ?? Nil
           !! bless-hash-as(self, my % is Map =
                :class($class.^name),
-               :@headers,
+               :headers(eager @headers.map({ "$_.name(): $_.value()" })),
                :%nameds,
                :payload(bless-hash-as($class, payload))
              )
