@@ -2,8 +2,8 @@ use JSON::RepositoryEvent::Forgejo;
 use JSON::RepositoryEvent::GitHub;
 use JSON::RepositoryEvent::Helpers; # bless-hash-as
 
-#- X::JSON::RepositoryEvent::Unknown-Event -------------------------------------
-class X::JSON::RepositoryEvent::Unknown-Event {
+#- X::JSON::RepositoryEvent::Unknown -------------------------------------------
+class X::JSON::RepositoryEvent::Unknown {
     has $.type;
     has $.name;
     method message() {
@@ -18,7 +18,7 @@ class JSON::RepositoryEvent is Map {
             my $name := $event.value.split("_").map(*.tc).join;
             JSON::RepositoryEvent::Forgejo::{$name}:exists
               ?? JSON::RepositoryEvent::Forgejo::{$name}
-              !! X::JSON::Repository::Unknown-Event.new(
+              !! X::JSON::RepositoryEvent::Unknown.new(
                    :type<Forgejo>, :$name
                  ).Failure
         }
@@ -26,7 +26,7 @@ class JSON::RepositoryEvent is Map {
             my $name := $event.value.split("_").map(*.tc).join;
             JSON::RepositoryEvent::GitHub::{$name}:exists
               ?? JSON::RepositoryEvent::GitHub::{$name}
-              !! X::JSON::Repository::Unknown-Event.new(
+              !! X::JSON::RepositoryEvent::Unknown.new(
                    :type<GitHub>, :$name
                  ).Failure
         }
