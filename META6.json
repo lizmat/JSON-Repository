@@ -3,6 +3,8 @@
   "authors": [
     "Elizabeth Mattijsen"
   ],
+  "build-depends": [
+  ],
   "depends": [
   ],
   "description": "Representation of a repository event",
@@ -15,6 +17,9 @@
     "JSON::RepositoryEvent::Helpers": "lib/JSON/RepositoryEvent/Helpers.rakumod"
   },
   "raku": "6.d",
+  "resources": [
+  ],
+  "source-url": "https://codeberg.org/lizmat/JSON-RepositoryEvent.git",
   "support": {
     "bugtracker": "https://codeberg.org/lizmat/JSON-RepositoryEvent/issues",
     "email": "liz@raku.rocks",
@@ -24,7 +29,11 @@
     "JSON",
     "REPOSITORY",
     "EVENT",
-    "FORGEJO","CODEBERG","GITHUB"
+    "FORGEJO",
+    "CODEBERG",
+    "GITHUB"
+  ],
+  "test-depends": [
   ],
   "version": "0.0.1"
 }

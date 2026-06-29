@@ -12,7 +12,10 @@ use JSON::RepositoryEvent;
 
 =head1 DESCRIPTION
 
-JSON::RepositoryEvent is ...
+The C<JSON::RepositoryEvent> provides a distribution for mapping
+repository related events in JSON format (such as typically provided
+by collaborative services such as Github / Codeberg in a webhook)
+into Raku classes with an object oriented interface.
 
 =head1 AUTHOR
 
