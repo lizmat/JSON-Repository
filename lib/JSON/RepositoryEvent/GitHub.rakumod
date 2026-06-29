@@ -212,6 +212,35 @@ class CheckSuite is Map {
 }
 BEGIN add-simple-accessors CheckSuite, <action>;
 
+#- JSON::RepositoryEvent::GitHub::Output ---------------------------------------
+class Output is Map { }
+BEGIN add-simple-accessors Output, <
+  annotations-count annotations-url summary text title
+>;
+
+#- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
+class CheckRun::CheckRun is Map {
+    method app() { bless-hash-as App, self<app> }
+    method check-suite() {
+        bless-hash-as CheckSuite::CheckSuite, self<check_suite>
+    }
+    method output() { bless-hash-as Output, self<output> }
+}
+BEGIN add-simple-accessors CheckRun::CheckRun, <
+  conclusion details-url external-id head-sha html-url id name node-id
+  status url
+>;
+BEGIN add-list-accessors CheckRun::CheckRun, <pull-requests>;
+BEGIN add-datetime-accessors CheckRun::CheckRun, <completed-at started-at>;
+
+#- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
+class CheckRun is Map {
+    method check-run()  { bless-hash-as CheckRun::CheckRun, self<check_run>  }
+    method repository() { bless-hash-as Repository,         self<repository> }
+    method sender()     { bless-hash-as Actor,              self<sender>     }
+}
+BEGIN add-simple-accessors CheckRun, <action>;
+
 #- JSON::RepositoryEvent::GitHub::Organization ---------------------------------
 class Organization is Map { }
 BEGIN add-simple-accessors Organization, <
