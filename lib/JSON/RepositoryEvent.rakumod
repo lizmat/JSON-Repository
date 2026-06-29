@@ -3,7 +3,7 @@ use JSON::RepositoryEvent::GitHub;
 use JSON::RepositoryEvent::Helpers; # bless-hash-as
 
 #- X::JSON::RepositoryEvent::Unknown -------------------------------------------
-class X::JSON::RepositoryEvent::Unknown {
+class X::JSON::RepositoryEvent::Unknown is Exception {
     has $.type;
     has $.name;
     method message() {
