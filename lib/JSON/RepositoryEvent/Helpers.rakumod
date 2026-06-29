@@ -8,7 +8,7 @@ my sub bless-hash-as($class, \hash) is export {
              nqp::create(nqp::decont($class)),
              Map,
              '$!storage',
-             nqp::getattr(hash,Map,'$!storage')
+             nqp::getattr(nqp::decont(hash),Map,'$!storage')
            )
         !! Nil
 }

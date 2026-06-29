@@ -72,22 +72,6 @@ BEGIN add-simple-accessors Repository, <
 BEGIN add-list-accessors     Repository, <topics>;
 BEGIN add-datetime-accessors Repository, <created-at pushed-at updated-at>;
 
-#- JSON::RepositoryEvent::GitHub::Push -----------------------------------------
-class Push is Map {
-    method commits() {
-        bless-array-elements-as PushCommit, self<commits> // ()
-    }
-    method head-commit() {
-        try bless-hash-as PushCommit, self<head_commit>
-    }
-    method pusher()     { bless-hash-as Person,     self<pusher>     }
-    method repository() { bless-hash-as Repository, self<repository> }
-    method sender()     { bless-hash-as Actor,      self<sender>     }
-}
-BEGIN add-simple-accessors Push, <
-  after base-ref before compare created deleted forced ref
->;
-
 #- JSON::RepositoryEvent::GitHub::Workflow -------------------------------------
 class Workflow is Map { }
 BEGIN add-simple-accessors Workflow, <
@@ -126,15 +110,6 @@ BEGIN add-datetime-accessors WorkflowRun::Run, <
   created-at run-started-at updated-at
 >;
 
-#- JSON::RepositoryEvent::GitHub::WorkflowRun ----------------------------------
-class WorkflowRun is Map {
-    method repository()   { bless-hash-as Repository,       self<repository>   }
-    method sender()       { bless-hash-as Actor,            self<sender>       }
-    method workflow()     { bless-hash-as Workflow,         self<workflow>     }
-    method workflow-run() { bless-hash-as WorkflowRun::Run, self<workflow-run> }
-}
-BEGIN add-simple-accessors WorkflowRun, <action>;
-
 #- JSON::RepositoryEvent::GitHub::WorkflowJob::Step ----------------------------
 class WorkflowJob::Step is Map { }
 BEGIN add-simple-accessors WorkflowJob::Step, <
@@ -157,17 +132,6 @@ BEGIN add-list-accessors WorkflowJob::WorkflowJob, <labels>;
 BEGIN add-datetime-accessors WorkflowJob::WorkflowJob, <
   completed-at created-at started-at
 >;
-
-#- JSON::RepositoryEvent::GitHub::WorkflowJob ----------------------------------
-class WorkflowJob is Map {
-    method repository() { bless-hash-as Repository, self<repository> }
-    method sender()     { bless-hash-as Actor,      self<sender>     }
-    method workflow()   { bless-hash-as Workflow,   self<workflow>   }
-    method workflow-job() {
-        bless-hash-as WorkflowJob::WorkflowJob, self<workflow-job>
-    }
-}
-BEGIN add-simple-accessors WorkflowJob, <action>;
 
 #- JSON::RepositoryEvent::GitHub::Permissions ----------------------------------
 class Permissions is Map { }
@@ -202,23 +166,13 @@ BEGIN add-simple-accessors CheckSuite::CheckSuite, <
 BEGIN add-list-accessors     CheckSuite::CheckSuite, <pull-requests>;
 BEGIN add-datetime-accessors CheckSuite::CheckSuite, <created-at updated-at>;
 
-#- JSON::RepositoryEvent::GitHub::CheckSuite -----------------------------------
-class CheckSuite is Map {
-    method check-suite() {
-        bless-hash-as CheckSuite::CheckSuite, self<check_suite>
-    }
-    method repository() { bless-hash-as Repository, self<repository> }
-    method sender()     { bless-hash-as Actor,      self<sender>     }
-}
-BEGIN add-simple-accessors CheckSuite, <action>;
-
 #- JSON::RepositoryEvent::GitHub::Output ---------------------------------------
 class Output is Map { }
 BEGIN add-simple-accessors Output, <
   annotations-count annotations-url summary text title
 >;
 
-#- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
+#- JSON::RepositoryEvent::GitHub::CheckRun::CheckRun ---------------------------
 class CheckRun::CheckRun is Map {
     method app() { bless-hash-as App, self<app> }
     method check-suite() {
@@ -232,14 +186,6 @@ BEGIN add-simple-accessors CheckRun::CheckRun, <
 >;
 BEGIN add-list-accessors CheckRun::CheckRun, <pull-requests>;
 BEGIN add-datetime-accessors CheckRun::CheckRun, <completed-at started-at>;
-
-#- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
-class CheckRun is Map {
-    method check-run()  { bless-hash-as CheckRun::CheckRun, self<check_run>  }
-    method repository() { bless-hash-as Repository,         self<repository> }
-    method sender()     { bless-hash-as Actor,              self<sender>     }
-}
-BEGIN add-simple-accessors CheckRun, <action>;
 
 #- JSON::RepositoryEvent::GitHub::Organization ---------------------------------
 class Organization is Map { }
@@ -393,5 +339,101 @@ class PullRequest is Map {
     method sender()     { bless-hash-as Actor,      self<sender>     }
 }
 BEGIN add-simple-accessors PullRequest, <action number>;
+
+#- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
+class CheckRun is Map {
+    method ^description($self) {
+        my constant %description =
+          completed        => "A check run was completed, and a conclusion is available.",
+          created          => "A new check run was created.",
+          requested_action => "A check run completed, and someone requested a followup action that your app provides.",
+          rerequested      => "Someone requested to re-run a check run."
+        ;
+        %description{$self.action} // "No description available";
+    }
+
+    method check-run()  { bless-hash-as CheckRun::CheckRun, self<check_run>  }
+    method repository() { bless-hash-as Repository,         self<repository> }
+    method sender()     { bless-hash-as Actor,              self<sender>     }
+}
+BEGIN add-simple-accessors CheckRun, <action>;
+
+#- JSON::RepositoryEvent::GitHub::CheckSuite -----------------------------------
+class CheckSuite is Map {
+    method ^description($self) {
+        my constant %description =
+          completed   => "All check runs in a check suite have completed, and a conclusion is available.",
+          requested   => "Someone requested to run a check suite.",
+          rerequested => "Someone requested to re-run the check runs in a check suite."
+        ;
+        %description{$self.action} // "No description available";
+    }
+
+    method check-suite() {
+        bless-hash-as CheckSuite::CheckSuite, self<check_suite>
+    }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+BEGIN add-simple-accessors CheckSuite, <action>;
+
+#- JSON::RepositoryEvent::GitHub::Push -----------------------------------------
+class Push is Map {
+    method ^description($self) {
+        "One or more commits have been pushed."
+    }
+
+    method commits() {
+        bless-array-elements-as PushCommit, self<commits> // ()
+    }
+    method head-commit() {
+        try bless-hash-as PushCommit, self<head_commit>
+    }
+    method pusher()     { bless-hash-as Person,     self<pusher>     }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+BEGIN add-simple-accessors Push, <
+  after base-ref before compare created deleted forced ref
+>;
+
+#- JSON::RepositoryEvent::GitHub::WorkflowJob ----------------------------------
+class WorkflowJob is Map {
+    method ^description($self) {
+        my constant %description =
+          completed   => "A job in a workflow run finished.",
+          in_progress => "A job in a workflow run started processing on a runner.",
+          queued      => "A job in a workflow run was created.",
+          waiting     => "A job in a workflow run was created and is waiting for approvals."
+        ;
+        %description{$self.action} // "No description available";
+    }
+
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+    method workflow()   { bless-hash-as Workflow,   self<workflow>   }
+    method workflow-job() {
+        bless-hash-as WorkflowJob::WorkflowJob, self<workflow-job>
+    }
+}
+BEGIN add-simple-accessors WorkflowJob, <action>;
+
+#- JSON::RepositoryEvent::GitHub::WorkflowRun ----------------------------------
+class WorkflowRun is Map {
+    method ^description($self) {
+        my constant %description =
+          completed   => "A workflow run finished.",
+          in_progress => "A workflow run started processing on a runner.",
+          requested   => "A workflow run was triggered."
+        ;
+        %description{$self.action} // "No description available";
+    }
+
+    method repository()   { bless-hash-as Repository,       self<repository>   }
+    method sender()       { bless-hash-as Actor,            self<sender>       }
+    method workflow()     { bless-hash-as Workflow,         self<workflow>     }
+    method workflow-run() { bless-hash-as WorkflowRun::Run, self<workflow-run> }
+}
+BEGIN add-simple-accessors WorkflowRun, <action>;
 
 # vim: expandtab shiftwidth=4

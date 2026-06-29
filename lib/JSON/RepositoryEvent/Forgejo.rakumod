@@ -64,18 +64,6 @@ BEGIN add-datetime-accessors Repository, <
   archived-at created-at mirror-updated updated-at
 >;
 
-#- JSON::RepositoryEvent::Forgejo::Push ----------------------------------------
-class Push is Map {
-    method commits()     { bless-array-elements-as Commit, self<commits> // () }
-    method head-commit() { try bless-hash-as Commit,       self<head-commit>   }
-    method pusher()      { bless-hash-as Actor,            self<pusher>        }
-    method repository()  { bless-hash-as Repository,       self<repository>    }
-    method sender()      { bless-hash-as Actor,            self<sender>        }
-}
-BEGIN add-simple-accessors Push, <
-  after before compare-url ref total-commits
->;
-
 #- JSON::RepositoryEvent::Forgejo::Issue ---------------------------------------
 class Issue is Map {
     method repository() { bless-hash-as Repository, self<repository> }
@@ -97,6 +85,22 @@ class Issues is Map {
 }
 BEGIN add-simple-accessors Issues, <
   action commit-id number
+>;
+
+#- JSON::RepositoryEvent::Forgejo::Push ----------------------------------------
+class Push is Map {
+    method ^description($self) {
+        "One or more commits have been pushed."
+    }
+
+    method commits()     { bless-array-elements-as Commit, self<commits> // () }
+    method head-commit() { try bless-hash-as Commit,       self<head-commit>   }
+    method pusher()      { bless-hash-as Actor,            self<pusher>        }
+    method repository()  { bless-hash-as Repository,       self<repository>    }
+    method sender()      { bless-hash-as Actor,            self<sender>        }
+}
+BEGIN add-simple-accessors Push, <
+  after before compare-url ref total-commits
 >;
 
 # vim: expandtab shiftwidth=4
