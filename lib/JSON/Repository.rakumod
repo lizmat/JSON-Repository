@@ -15,7 +15,7 @@ class X::JSON::Repository::Unknown-Event {
 class JSON::Repository is Map {
     method !header2class(%headers) {
         if %headers<X-Forgejo-Event> -> $event {
-            my $name := $event.tc;
+            my $name := $event.split("_").map(*.tc).join;
             JSON::Repository::Forgejo::{$name}:exists
               ?? JSON::Repository::Forgejo::{$name}
               !! X::JSON::Repository::Unknown-Event.new(
@@ -23,7 +23,7 @@ class JSON::Repository is Map {
                  ).Failure
         }
         elsif %headers<X-GitHub-Event> -> $event {
-            my $name := $event.tc;
+            my $name := $event.split("_").map(*.tc).join;
             JSON::Repository::GitHub::{$name}:exists
               ?? JSON::Repository::GitHub::{$name}
               !! X::JSON::Repository::Unknown-Event.new(
