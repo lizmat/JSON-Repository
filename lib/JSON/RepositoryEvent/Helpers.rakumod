@@ -1,18 +1,20 @@
 #- helpful subroutines ---------------------------------------------------------
 my sub bless-hash-as($class, \hash) is export {
     use nqp;
-    hash
-      ?? nqp::p6bindattrinvres(
-           nqp::create(nqp::decont($class)),
-           Map,
-           '$!storage',
-           nqp::getattr(hash,Map,'$!storage')
-         )
-      !! Nil
+    nqp::istype(hash,Failure)
+      ?? hash.throwl
+      !! hash
+        ?? nqp::p6bindattrinvres(
+             nqp::create(nqp::decont($class)),
+             Map,
+             '$!storage',
+             nqp::getattr(hash,Map,'$!storage')
+           )
+        !! Nil
 }
 
 my sub bless-array-elements-as($class, @array) is export {
-    eager @array.map: { bless-hash-as($class,$_) }
+    eager @array.map: { bless-hash-as($class, $_) }
 }
 
 my sub add-simple-accessors($class, *@method-names) is export {
