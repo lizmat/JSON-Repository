@@ -60,9 +60,39 @@ any of the other C<JSON::RepositoryEvent::xxx> classes.
 =item nameds - named arguments in query
 =item payload - data blessed as a JSON::RepositoryEvent::xxx class
 
+=head1 NAMING LOGIC
+
+The data structures in the GitHub and Forgejo (e.g. Codeberg) API's
+typically use underscores in their names.  No underscores are used
+in the Raku classes.  If a name is mapped to a class, then an
+underscore created camelcase class names.  So "pull_request" becomes
+C<PullRequest> as a class name.  Other fields that have an underscore
+map the underscores to hyphens, so "created_at" as the name of a field
+in the data structure, becomes "created-at" as an accessor (method
+name).
+
+Some exceptions: field names that start with an underscore are used
+verbatim in method names (as methods starting with a hyphen are illegal
+in Raku).  If a field name starts with C<+>, it is replaced by the
+string "plus" in the method name.  If a field name starts with C<->,
+it is replaces by the string "minus" in the method name.
+
+=head1 THEORY OF OPERATION
+
+The underlying data structure is always a C<Map> (or a C<Hash>).
+All classes are subclasses of C<Map>, so all the functionality that
+you can expect from a C<Map> can be used on any of the classes in
+this distribution.
+
+All classes could be considered to be "views" on the underlying data
+structure: all "accessors" are in fact accessing certain parts of
+that data structure by key.  This approach allows for fast loading:
+only actual parts of the data structure that need to be accessed,
+will be fetched on demand.
+
 =head1 GITHUB CLASSES
 
-The full name of these classes is C<JSON::RepositoryEvent::Github::xxx>.
+The full name of these classes is C<JSON::RepositoryEvent::GitHub::xxx>.
 The C<JSON::RepositoryEvent> part is not mentioned here in the
 documentation for convenience.
 
@@ -71,30 +101,43 @@ documentation for convenience.
 =item action - action performed
 =item organization - see GitHub::Organization
 =item number - pull request number
-=item pull-request - see Github::PullRequest::PullRequest
-=item repository - see Github::Repository
-=item sender - see Github::Actor
+=item pull-request - see GitHub::PullRequest::PullRequest
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
 
 =head2 GitHub::CheckRun
 
 =item action - action performed
 =item check-run - see GitHub::CheckRun::CheckRun
-=item repository - see Github::Repository
-=item sender - see Github::Actor
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
 
 =head2 GitHub::CheckSuite
 
 =item action - action performed
 =item check-suite - see GitHub::CheckSuite::CheckSuite
-=item repository - see Github::Repository
-=item sender - see Github::Actor
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+
+=head2 GitHub::Fork
+
+=item forkee - see GitHub::Repository
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+
+=head2 GitHub::Issues
+
+=item action - the action performed on an issue
+=item issue - see GitHub::Issue
+=item repository - see Forgejo::Repository
+=item sender - see GitHub::Actor
 
 =head2 GitHub::Push
 
 =item after - SHA of previous commit
 =item base-ref - SHA of base reference
 =item before - SHA of next commit
-=item commits - list of one or more Github::PushCommit object
+=item commits - list of one or more GitHub::PushCommit object
 =item compare - compare URL
 =item created - list of files created
 =item deleted - list of files deleted
@@ -102,26 +145,582 @@ documentation for convenience.
 =item ref - SHA of reference
 =item head-commit - see GitHub::PushCommit
 =item pusher - see GitHub::Person
-=item repository - see Github::Repository
-=item sender - see Github::Actor
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
 
 =head2 GitHub::WorkflowJob
 
 =item action - action performed
-=item repository - see Github::Repository
-=item sender - see Github::Actor
-=item workflow - see Github::Workflow
-=item workflow-job - see Github::WorkflowJob::WorkflowJob
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+=item workflow - see GitHub::Workflow
+=item workflow-job - see GitHub::WorkflowJob::WorkflowJob
 
 =head2 GitHub::WorkflowRun
 
 =item action - action performed
-=item repository - see Github::Repository
-=item sender - see Github::Actor
-=item workflow - see Github::Workflow
-=item workflow-run - see Github::WorkflowRun::WorkflowRun
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+=item workflow - see GitHub::Workflow
+=item workflow-run - see GitHub::WorkflowRun::WorkflowRun
+
+=head1 GITHUB ELEMENT CLASSES
+
+These classes represent (common) parts of the actual payload classes
+for GitHub events.  The C<JSON::RepositoryEvent> part is not mentioned
+here in the documentation for convenience.
+
+=head2 GitHub::Actor
+
+=item avatar-url
+=item email
+=item events-url
+=item followers-url
+=item following-url
+=item gists-url
+=item gravatar-id
+=item html-url
+=item id
+=item login
+=item name
+=item node-id
+=item organizations-url
+=item received-events-url
+=item repos-url
+=item site-admin
+=item starred-url
+=item subscriptions-url
+=item type
+=item url
+=item user-view-type
+
+=head2 GitHub::App
+
+=item client-id
+=item created-at - DateTime
+=item description
+=item events - List
+=item external-url
+=item html-url
+=item id
+=item name
+=item node-id
+=item owner - see GitHub::Actor
+=item permissions - see GitHub::Permissions
+=item slug
+=item update-at - DateTime
+
+=head2 GitHub::CheckRun::CheckRun
+
+=item app - see GitHub::App
+=item completed-at - DateTime
+=item check-suite - see GitHub::CheckSuite::CheckSuite
+=item conclusion
+=item details-url
+=item external-id
+=item head-sha
+=item html-url
+=item id
+=item name
+=item node-id
+=item output - see GitHub::Output
+=item pull-requests - List
+=item started-at - DateTime
+=item status
+=item url
+
+=head2 GitHub::CheckSuite::CheckSuite
+
+=item app - see GitHub::App
+=item after
+=item before
+=item check-runs-url
+=item conclusion
+=item created-at - DateTime
+=item head-branch
+=item head-commit - see GitHub::PushCommit
+=item head-sha
+=item id
+=item latest-check-runs-count
+=item node-id
+=item pull-requests - List
+=item rerequestable
+=item runs-rerequestable
+=item status
+=item updated-at - DateTime
+=item url
+
+=head2 GitHub::Comment
+
+=item author-association
+=item body
+=item commit-id
+=item created-at - DateTime
+=item html-url
+=item id
+=item line
+=item node-id
+=item path
+=item position
+=item reactions - see GitHub::Reactions
+=item updated-at - DateTime
+=item user - see GitHub::Actor
+
+=head2 GitHub::Commit
+
+=item author - see GitHub::Actor
+=item comments-url
+=item commit - see GitHub::PushCommit
+=item committer - see GitHub::Actor
+=item html-url
+=item node-id
+=item parents - see GitHub::Tree
+=item sha
+=item url
+
+=head2 GitHub::CommitComment
+
+=item action
+=item comment - see GitHub::Comment
+=item created-at - DateTime
+=item organization - see GitHub::Organization
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+=item updated-at - DateTime
+
+=head2 GitHub::Delete
+
+=item organization - see GitHub::Organization
+=item pusher-type
+=item ref
+=item ref-type
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+
+=head2 GitHub::DependenciesSummary
+
+=item blocked-by
+=item blocking
+=item total-blocked-by
+=item total-blocking
+
+=head2 GitHub::Issue
+
+=item active-lock-reason
+=item assignee
+=item assignees - List
+=item author-association
+=item body
+=item closed-at - DateTime
+=item comments
+=item comments-url
+=item created-at - DateTime
+=item events-url
+=item html-url
+=item id
+=item issue-dependendencies-summary - see GitHub::DependenciesSummary
+=item issue-field-values - List
+=item labels - List
+=item labels-url
+=item locked
+=item milestone
+=item node-id
+=item number
+=item performed-via-github-app
+=item pinned-comment
+=item reactions - see GitHub::Reactions
+=item repository-url
+=item state
+=item state-reason
+=item timeline-url
+=item updated-at - DateTime
+=item url
+=item user - see GitHub::Actor
+
+=head2 GitHub::IssueComment
+
+=item action
+=item comment - see GitHub::Comment
+=item created-at - DateTime
+=item issue - see GitHub::Issue
+=item organization - see GitHub::Organization
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+=item updated-at - DateTime
+
+=head2 GitHub::License
+
+=item key
+=item name
+=item node-id
+=item spdx-id
+=item url
+
+=head2 GitHub::Link
+
+=item href
+
+=head2 GitHub::Organization
+
+=item avatar_url
+=item description
+=item events-url
+=item hooks-url
+=item id
+=item issues-url
+=item login
+=item members-url
+=item node-id
+=item public-members-url
+=item repos-url
+=item url
+
+=head2 GitHub::Output
+
+=item annotations-count
+=item annotations-url
+=item summary
+=item text
+=item title
+
+=head2 GitHub::Permissions
+
+=item actions
+=item administration
+=item artifact-metadata
+=item attestations
+=item checks
+=item code-quality
+=item contents
+=item copilot-requests
+=item deployments
+=item discussions
+=item drives
+=item issues
+=item merge-queues
+=item metadata
+=item models
+=item packages
+=item pages
+=item pull-requests
+=item repository-hooks
+=item repository-projects
+=item security-events
+=item statuses
+=item vulnerabity-alerts
+
+=head2 GitHub::Person
+
+=item date - DateTime
+=item email
+=item name
+=item username
+
+=head2 PullRequest::PullRequest
+
+=item _links - see GitHub::Link
+=item active-lock-reason
+=item additions
+=item assignee
+=item assignees - List
+=item author-association
+=item auto-merge
+=item base - see GitHub::State
+=item body
+=item changed-files
+=item closed-at - DateTime
+=item comments
+=item comments-url
+=item commits
+=item commits-url
+=item created-at - DateTime
+=item deletions
+=item diff-url
+=item draft
+=item base - see GitHub::State
+=item head - see GitHub::State
+=item html-url
+=item id
+=item issue-url
+=item labels - List
+=item locked
+=item maintainer-can-modify
+=item merge-commit-sha
+=item merged-at - DateTime
+=item merged-by - see GitHub::Actor
+=item mergeable
+=item mergeable-state
+=item merged
+=item milestone
+=item node-id
+=item number
+=item patch-url
+=item rebaseable
+=item repository - see GitHub::Repository
+=item requested-reviewers - List
+=item requested-teams - List
+=item review-comment-url
+=item review-comments
+=item review-comments-url
+=item sender - see GitHub::Actor
+=item state
+=item statuses-url
+=item title
+=item updated-at - DateTime
+=item url
+=item user - see GitHub::Actor
+
+=head2 GitHub::PushCommit
+
+=item added - List
+=item author - see GitHub::Person
+=item committer - see GitHub::Person
+=item distinct
+=item id
+=item message
+=item modified - List
+=item removed - List
+=item tree-id
+=item timestamp - DateTime
+=item url
+
+=head2 GitHub::Reactions
+
+=item confused
+=item eyes
+=item heart
+=item hooray
+=item laugh
+=item plus1
+=item minus1
+=item rocket
+=item total-count
+=item url
+
+=head2 GitHub::Repository
+
+=item allow-forking
+=item archive-url
+=item archived
+=item assignees-url
+=item blobs-url
+=item branches-url
+=item clone-url
+=item collaborators-url
+=item comments-url
+=item commits-url
+=item compare-url
+=item contents-url
+=item contributors-url
+=item created-at - DateTime
+=item default-branch
+=item deployment-url
+=item description
+=item disabled
+=item downloads-url
+=item events-url
+=item fork
+=item forks
+=item forks-count
+=item forks-url
+=item full-name
+=item git-commits-url
+=item git-refs-url
+=item git-tags-url
+=item git-url
+=item has-discussions
+=item has-downloads
+=item has-issues
+=item has-pages
+=item has-projects
+=item has-pull-requests
+=item has-wiki
+=item homepage
+=item hooks-url
+=item html-url
+=item id
+=item is-template
+=item issue-comment-url
+=item issue-events-url
+=item issues-url
+=item keys-url
+=item labels-url
+=item language
+=item languages-url
+=item license - see GitHub::License
+=item master-branch
+=item merges-url
+=item milestones-url
+=item mirror-url
+=item name
+=item node-id
+=item notifications-url
+=item open-issues
+=item open-issues-count
+=item owner - see GitHub::Actor
+=item private
+=item pull-request-creation-policy
+=item pulls-url
+=item pushed-at - DateTime
+=item releases-url
+=item size
+=item ssh-url
+=item stargazers
+=item stargazers-count
+=item stargazers-url
+=item statuses-url
+=item subscribers-url
+=item subscription-url
+=item svn-url
+=item tags-url
+=item teams-url
+=item topics - List
+=item trees-url
+=item updated-at - DateTime
+=item visibility
+=item watchers
+=item watchers-count
+=item web-commit-signoff-required
+
+=head2 GitHub::State
+
+=item label
+=item ref
+=item repo - see GitHub::Repository
+=item sha
+=item user - see GitHub::Actor
+
+=head2 GitHub::Status
+
+=item avatar-url
+=item brances - List
+=item commit - see GitHub::TreeCommit
+=item context
+=item created-at - DateTime
+=item description
+=item id
+=item name
+=item organization - see GitHub::Organization
+=item repository - see GitHub::Repository
+=item sender - see GitHub::Actor
+=item sha
+=item state
+=item target-url
+=item updated-at - DateTime
+
+=head2 GitHub::SubIssuesSummary
+
+=item complete
+=item percent-completed
+=item total
+
+=head2 GitHub::Tree
+
+i=item html-url
+i=item sha
+i=item url
+
+=head2 GitHub::TreeCommit
+
+=item author - see GitHub::Actor
+=item committer - see GitHub::Actor
+=item comment-count
+=item message
+=item tree - see GitHub::Tree
+=item url
+=item verification - see GitHub::Verification
+
+=head2 GitHub::Verification
+
+=item payload
+=item reason
+=item signature
+=item verified
+=item verified-at - DateTime
+
+=head2 GitHub::Workflow
+
+=item badge-url
+=item created-at - DateTime
+=item html-url
+=item id
+=item name
+=item node-id
+=item path
+=item state
+=item updated-at - DateTime
+=item url
+
+=head2 GitHub::WorkflowJob::WorkflowJob
+
+=item check-run-url
+=item completed-at - DateTime
+=item conclusion
+=item created-at - DateTime
+=item head-branch
+=item head-sha
+=item html-url
+=item id
+=item labels - List
+=item name
+=item node-id
+=item run-attempt
+=item run-id
+=item run-url
+=item runner-group-id
+=item runner-group-name
+=item runner-id
+=item runner-name
+=item started-at - DateTime
+=item status
+=item steps - List, see GitHub::WorkflowJob::Step
+=item url
+=item workflow-name
+
+=head2 GitHub::WorkflowRun::WorkflowRun
+
+=item actor - see GitHub::Actor
+=item artifacts-url
+=item cancel-url
+=item check-suite-id
+=item check-suite-node-id
+=item check-suite-url
+=item conclusion
+=item created-at - DateTime
+=item display-title
+=item event
+=item head-branch
+=item head-commit - see GitHub::PushCommit
+=item head-sha
+=item html-url
+=item id
+=item jobs-url
+=item logs-url
+=item name
+=item node-id
+=item path
+=item previous-attempt-url
+=item pull-requests -List
+=item references-workflows -List
+=item repository - see GitHub::Repository
+=item rerun-url
+=item run-attempt
+=item run-number
+=item run-started-at - DateTime
+=item status
+=item triggering-actor - see GitHub::Actor
+=item updated-at - DateTime
+=item url
+=item workflow-id
+=item workflow-url
 
 =head1 FORGEJO CLASSES
+
+=head2 Forgejo::Fork
+
+=item forkee - see Forgejo::Repository
+=item repository - see Forgejo::Repository
+=item sender - see Forgejo::Actor
 
 =head2 Forgejo::Issues
 
@@ -145,29 +744,161 @@ documentation for convenience.
 =item sender - see Forgejo::Actor
 =item total-commits - number of commits in this push
 
-=head1 NAMING LOGIC
+=head1 FORGEJO ELEMENT CLASSES
 
-The data structures in the GitHub and Forgejo (e.g. Codeberg) API's
-typically use underscores in their names.  No underscores are used
-in the Raku classes.  If a name is mapped to a class, then an
-underscore created camelcase class names.  So "pull_request" becomes
-C<PullRequest> as a class name.  Other fields that have an underscore
-map the underscores to hyphens, so "created_at" as the name of a field
-in the data structure, becomes "created-at" as an accessor (method
-name).
+These classes represent (common) parts of the actual payload classes
+for Forgejo (Codeberg) events.  The C<JSON::RepositoryEvent> part is
+not mentioned here in the documentation for convenience.
 
-=head1 THEORY OF OPERATION
+=head2 Forgejo::Actor
 
-The underlying data structure is always a C<Map> (or a C<Hash>).
-All classes are subclasses of C<Map>, so all the functionality that
-you can expect from a C<Map> can be used on any of the classes in
-this distribution.
+=item active
+=item avatar-url
+=item created - DateTime
+=item description
+=item email
+=item followers-count
+=item following-count
+=item full-name
+=item html-url
+=item id
+=item is-admin
+=item language
+=item last-login - DateTime
+=item location
+=item login
+=item login-name
+=item prohibit-login
+=item pronouns
+=item restricted
+=item source-id
+=item starred-repos-count
+=item username
+=item visibility
+=item website
 
-All classes could be considered to be "views" on the underlying data
-structure: all "accessors" are in fact accessing certain parts of
-that data structure by key.  This approach allows for fast loading:
-only actual parts of the data structure that need to be accessed,
-will be fetched on demand.
+=head2 Forgejo::Commit
+
+=item added - List
+=item author - see Forgejo::Person
+=item committer - see Forgejo::Person
+=item id
+=item message
+=item modified - List
+=item removed - List
+=item timestamp - DateTime
+=item url
+=item verification
+
+=head2 Forgejo::Issue
+
+=item assets - List
+=item assignee
+=item assignees
+=item body
+=item closed-at - DateTime
+=item created-at - DateTime
+=item comments
+=item due-date
+=item html-url
+=item id
+=item is-locked
+=item labels - List
+=item milestone
+=item number
+=item original-author
+=item original-author-id
+=item pin-orer
+=item pull-request
+=item ref
+=item state
+=item title
+=item updated-at - DateTime
+=item url
+
+=head2 Forgejo::Permissions
+
+=item admin
+=item pull
+=item push
+
+=head2 Forgejo::Person
+
+=item email
+=item name
+=item username
+
+=head2 Forgejo::Repository
+
+=item allow-fast-forward-only-merge
+=item allow-merge-commits
+=item allow-rebase
+=item allow-rebase-explicit
+=item allow-rebase-update
+=item allow-squash-merge
+=item archived
+=item archived-at - DateTime
+=item avatar-url
+=item clone-url
+=item created-at - DateTime
+=item default-allow-maintainer-edit
+=item default-branch
+=item default-delete-branch-after-merge
+=item default-merge-style
+=item default-update-style
+=item description
+=item empty
+=item fork
+=item forks-count
+=item full-name
+=item globally-editable-wiki
+=item has-actions
+=item has-issues
+=item has-projects
+=item has-pull-requests
+=item has-releases
+=item has-wiki
+=item has-wiki-contents
+=item html-url
+=item id
+=item ignore_whitespace_conflicts
+=item internal
+=item internal-tracker - see Forgejo::Tracker
+=item language
+=item languages-url
+=item link
+=item mirror
+=item mirror-interval
+=item mirror-updated - DateTime
+=item name
+=item object-format
+=item open-issues-count
+=item open-pr-counter
+=item original-url
+=item owner - see Forgejo::Actor
+=item permissions - see Forgejo::Permissions
+=item parent
+=item private
+=item release-counter
+=item repo-transfer
+=item size
+=item ssh-url
+=item stars-count
+=item template
+=item topics - List
+=item updated-at - DateTime
+=item url
+=item watchers-count
+=item website
+=item wiki-branch
+=item wiki-clone-url
+=item wiki-ssh-url
+
+=head2 Forgejo::Tracker
+
+=item allow-only-contributors-to-track-time
+=item enable-issue-dependencies
+=item enable_time_tracker
 
 =head1 AUTHOR
 

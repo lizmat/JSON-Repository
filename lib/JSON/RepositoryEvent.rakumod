@@ -57,12 +57,16 @@ class JSON::RepositoryEvent is Map {
              )
     }
 
+    # accessors
     method class()      {                        ::(self<class>)        }
     method created-at() {              DateTime.new(self<created_at>)   }
     method headers()    {                           self<headers> // () }
     method irc          { eager (self.nameds<irc> // "").split(",")     }
     method nameds()     {                           self<nameds>  // {} }
     method payload()    { bless-hash-as self.class, self<payload>       }
+
+    # utility methods
+    method description() { self.payload.^description }
 }
 
 # vim: expandtab shiftwidth=4

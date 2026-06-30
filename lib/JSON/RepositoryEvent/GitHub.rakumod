@@ -57,7 +57,7 @@ class CheckSuite::CheckSuite is Map {
 }
 BEGIN add-simple-accessors CheckSuite::CheckSuite, <
   after before check-runs-url conclusion head-branch head-sha id
-  latest-check-runs-count node-id rerequistable runs-rerequestable
+  latest-check-runs-count node-id rerequestable runs-rerequestable
   status url
 >;
 BEGIN add-list-accessors     CheckSuite::CheckSuite, <pull-requests>;
@@ -69,7 +69,7 @@ class Comment is Map {
     method user()      { bless-hash-as Actor,     self<user> }
 }
 BEGIN add-simple-accessors Comment, <
-  author-association body commit-id html-url id line node-id path position 
+  author-association body commit-id html-url id line node-id path position
 >;
 BEGIN add-datetime-accessors Comment, <created-at updated-at>;
 
@@ -145,7 +145,7 @@ BEGIN add-simple-accessors Link, <href>;
 #- JSON::RepositoryEvent::GitHub::Organization ---------------------------------
 class Organization is Map { }
 BEGIN add-simple-accessors Organization, <
-  avatar_url description events-url hooks-url if issues-url login
+  avatar_url description events-url hooks-url id issues-url login
   members-url node-id public-members-url repos-url url
 >;
 
@@ -175,9 +175,9 @@ class PullRequest::PullRequest is Map {
     method base()       { bless-hash-as State,          self<base>       }
     method head()       { bless-hash-as State,          self<head>       }
     method merged-by()  { bless-hash-as Actor,          self<merged_by>  }
-    method user()       { bless-hash-as Actor,          self<user>       }
     method repository() { bless-hash-as Repository,     self<repository> }
     method sender()     { bless-hash-as Actor,          self<sender>     }
+    method user()       { bless-hash-as Actor,          self<user>       }
 }
 BEGIN add-simple-accessors PullRequest::PullRequest, <
   active-lock-reason additions assignee author-association auto-merge
@@ -242,7 +242,7 @@ class State is Map {
     method repo() { bless-hash-as Repository, self<repo> }
     method user() { bless-hash-as Actor,      self<user> }
 }
-BEGIN add-simple-accessors Link, <label ref sha>;
+BEGIN add-simple-accessors State, <label ref sha>;
 
 #- JSON::RepositoryEvent::GitHub::Status ---------------------------------------
 class Status is Map {
@@ -313,12 +313,9 @@ BEGIN add-datetime-accessors WorkflowJob::WorkflowJob, <
 
 #- JSON::RepositoryEvent::GitHub::WorkflowRun::WorkflowRun ---------------------
 class WorkflowRun::WorkflowRun is Map {
-    method actor() {
-        bless-hash-as Actor, self<actor>
-    }
-    method head-commit() {
-        bless-hash-as PushCommit, self<head-commit>
-    }
+    method actor()       { bless-hash-as Actor,      self<actor>       }
+    method head-commit() { bless-hash-as PushCommit, self<head-commit> }
+
     method head-repository() {
         bless-hash-as Repository, self<head-repository>
     }
@@ -355,7 +352,7 @@ class CheckRun is Map {
           requested_action => "A check run completed, and someone requested a followup action that your app provides.",
           rerequested      => "Someone requested to re-run a check run."
         ;
-        %description{$self.action} // "No description available";
+        %description{$self.action}
     }
 
     method check-run()  { bless-hash-as CheckRun::CheckRun, self<check_run>  }
@@ -372,7 +369,7 @@ class CheckSuite is Map {
           requested   => "Someone requested to run a check suite.",
           rerequested => "Someone requested to re-run the check runs in a check suite."
         ;
-        %description{$self.action} // "No description available";
+        %description{$self.action}
     }
 
     method check-suite() {
@@ -382,6 +379,51 @@ class CheckSuite is Map {
     method sender()     { bless-hash-as Actor,      self<sender>     }
 }
 BEGIN add-simple-accessors CheckSuite, <action>;
+
+#- JSON::RepositoryEvent::GitHub::Fork -----------------------------------------
+class Fork is Map {
+    method ^description($) { "A repository was forked." }
+
+    method forkee()     { bless-hash-as Repository, self<forkee> }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+
+#- JSON::RepositoryEvent::GitHub::Issues ---------------------------------------
+class Issues is Map {
+    method ^description($self) {
+        my constant %description =
+          assigned      => "An issue was assigned to a user.",
+          closed        => "An issue was closed.",
+          deleted       => "An issue was  deleted.",
+          demilestoned  => "An issue was removed from a milestone.",
+          edited        => "The title or body on an issue was edited.",
+          field_added   => "An issue field value was set or updated on an issue.",
+          field_removed => "An issue field value was cleared from an issue.",
+          labeled       => "A label was added to an issue .",
+          locked        => "Conversation on an issue was locked.",
+          milestoned    => "An issue was added to a milestone.",
+          opened        => "An issue was created.",
+          pinned        => "An issue was pinned to a repository.",
+          reopened      => "A previously closed issue was reopened.",
+          transferred   => "An issue was transferred to another repository.",
+          typed         => "An issue type was added to an issue.",
+          unassigned    => "A user was unassigned from an issue.",
+          unlabeled     => "A label was removed from an issue.",
+          unlocked      => "Conversation on an issue was unlocked.",
+          unpinned      => "An issue was unpinned from a repository.",
+          untyped       => "An issue type was removed from an issue."
+        ;
+        %description{$self.action}
+    }
+
+    method issue()      { bless-hash-as Issue,      self<issue>      }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+BEGIN add-simple-accessors Issues, <
+  action
+>;
 
 #- JSON::RepositoryEvent::GitHub::PullRequest ----------------------------------
 class PullRequest is Map {
@@ -409,7 +451,7 @@ class PullRequest is Map {
           unlabeled              => "A label was removed from a pull request.",
           unlocked               => "Conversation on a pull request was unlocked."
         ;
-        %description{$self.action} // "No description available";
+        %description{$self.action}
     }
 
     method organization() { bless-hash-as Organization, self<organization> }
@@ -423,7 +465,7 @@ BEGIN add-simple-accessors PullRequest, <action number>;
 
 #- JSON::RepositoryEvent::GitHub::Push -----------------------------------------
 class Push is Map {
-    method ^description($self) {
+    method ^description($) {
         "One or more commits have been pushed."
     }
 
@@ -450,7 +492,7 @@ class WorkflowJob is Map {
           queued      => "A job in a workflow run was created.",
           waiting     => "A job in a workflow run was created and is waiting for approvals."
         ;
-        %description{$self.action} // "No description available";
+        %description{$self.action}
     }
 
     method repository() { bless-hash-as Repository, self<repository> }
@@ -470,7 +512,7 @@ class WorkflowRun is Map {
           in_progress => "A workflow run started processing on a runner.",
           requested   => "A workflow run was triggered."
         ;
-        %description{$self.action} // "No description available";
+        %description{$self.action}
     }
 
     method repository() { bless-hash-as Repository, self<repository> }

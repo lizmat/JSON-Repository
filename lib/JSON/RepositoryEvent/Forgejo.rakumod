@@ -79,7 +79,7 @@ BEGIN add-datetime-accessors Repository, <
 #- JSON::RepositoryEvent::Forgejo::Tracker -------------------------------------
 class Tracker is Map { }
 BEGIN add-simple-accessors Tracker, <
-  allow-only-contributors-to_track-time enable-issue-dependencies
+  allow-only-contributors-to-track-time enable-issue-dependencies
   enable_time_tracker
 >;
 
@@ -87,8 +87,43 @@ BEGIN add-simple-accessors Tracker, <
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # ⬇⬇ actual payload classes
 
+#- JSON::RepositoryEvent::Forgejo::Fork ----------------------------------------
+class Fork is Map {
+    method ^description($) { "A repository was forked." }
+
+    method forkee()     { bless-hash-as Repository, self<forkee>     }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+
 #- JSON::RepositoryEvent::Forgejo::Issues --------------------------------------
 class Issues is Map {
+    method ^description($self) {
+        my constant %description =
+          assigned      => "An issue was assigned to a user.",
+          closed        => "An issue was closed.",
+          deleted       => "An issue was  deleted.",
+          demilestoned  => "An issue was removed from a milestone.",
+          edited        => "The title or body on an issue was edited.",
+          field_added   => "An issue field value was set or updated on an issue.",
+          field_removed => "An issue field value was cleared from an issue.",
+          labeled       => "A label was added to an issue .",
+          locked        => "Conversation on an issue was locked.",
+          milestoned    => "An issue was added to a milestone.",
+          opened        => "An issue was created.",
+          pinned        => "An issue was pinned to a repository.",
+          reopened      => "A previously closed issue was reopened.",
+          transferred   => "An issue was transferred to another repository.",
+          typed         => "An issue type was added to an issue.",
+          unassigned    => "A user was unassigned from an issue.",
+          unlabeled     => "A label was removed from an issue.",
+          unlocked      => "Conversation on an issue was unlocked.",
+          unpinned      => "An issue was unpinned from a repository.",
+          untyped       => "An issue type was removed from an issue."
+        ;
+        %description{$self.action}
+    }
+
     method issue()      { bless-hash-as Issue,      self<issue>      }
     method repository() { bless-hash-as Repository, self<repository> }
     method sender()     { bless-hash-as Actor,      self<sender>     }
