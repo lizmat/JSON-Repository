@@ -329,17 +329,6 @@ BEGIN add-datetime-accessors PullRequest::PullRequest, <
   closed-at created-at merged-at updated-at
 >;
 
-#- JSON::RepositoryEvent::GitHub::PullRequest ----------------------------------
-class PullRequest is Map {
-    method organization() { bless-hash-as Organization, self<organization> }
-    method pull-request() {
-        bless-hash-as PullRequest::PullRequest, self<pull_request>
-    }
-    method repository() { bless-hash-as Repository, self<repository> }
-    method sender()     { bless-hash-as Actor,      self<sender>     }
-}
-BEGIN add-simple-accessors PullRequest, <action number>;
-
 #- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
 class CheckRun is Map {
     method ^description($self) {
@@ -376,6 +365,44 @@ class CheckSuite is Map {
     method sender()     { bless-hash-as Actor,      self<sender>     }
 }
 BEGIN add-simple-accessors CheckSuite, <action>;
+
+#- JSON::RepositoryEvent::GitHub::PullRequest ----------------------------------
+class PullRequest is Map {
+    method ^description($self) {
+        my constant %description =
+          assigned               => "A pull request was assigned to a user.",
+          auto_merged_disabled   => "Auto merge was disabled for a pull request.",
+          auto_merged_enabled    => "Auto merge was enabled for a pull request.",
+          closed                 => "A pull request was closed.",
+          converted_to_draft     => "A pull request was converted to a draft.",
+          demilestoned           => "A pull request was removed from a milestone.",
+          dequeued               => "A pull request was removed from the merge queue.",
+          edited                 => "The title or body of a pull request was edited, or the base branch of a pull request was changed.",
+          enqueued               => "A pull request was added to the merge queue.",
+          labeled                => "A label was added to a pull request.",
+          locked                 => "Conversation on a pull request was locked.",
+          milestoned             => "A pull request was added to a milestone.",
+          opened                 => "A pull request was created.",
+          ready_for_review       => "A draft pull request was marked as ready for review.",
+          reopened               => "A previously closed pull request was reopened.",
+          review_request_removed => "A request for review by a person or team was removed from a pull request.",
+          review_requested       => "Review by a person or team was requested for a pull request.",
+          synchronize            => "A pull request's head branch was updated.",
+          unassigned             => "A user was unassigned from a pull request.",
+          unlabeled              => "A label was removed from a pull request.",
+          unlocked               => "Conversation on a pull request was unlocked."
+        ;
+        %description{$self.action} // "No description available";
+    }
+
+    method organization() { bless-hash-as Organization, self<organization> }
+    method pull-request() {
+        bless-hash-as PullRequest::PullRequest, self<pull_request>
+    }
+    method repository() { bless-hash-as Repository, self<repository> }
+    method sender()     { bless-hash-as Actor,      self<sender>     }
+}
+BEGIN add-simple-accessors PullRequest, <action number>;
 
 #- JSON::RepositoryEvent::GitHub::Push -----------------------------------------
 class Push is Map {
