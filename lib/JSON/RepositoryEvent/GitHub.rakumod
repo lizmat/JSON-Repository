@@ -2,10 +2,18 @@ use JSON::RepositoryEvent::Helpers;
 
 unit package JSON::RepositoryEvent::GitHub;
 
-#- JSON::RepositoryEvent::GitHub::Person ---------------------------------------
-class Person is Map { }
-BEGIN add-simple-accessors   Person, <email name username>;
-BEGIN add-datetime-accessors Person, <date>;
+# define stubs for forward references in alphabetically ordered
+# list of helper classes
+class Organization { ... }
+class Output       { ... }
+class Permissions  { ... }
+class PushCommit   { ... }
+class Reactions    { ... }
+class Repository   { ... }
+class State        { ... }
+class Tree         { ... }
+class TreeCommit   { ... }
+class Verification { ... }
 
 #- JSON::RepositoryEvent::GitHub::Actor ----------------------------------------
 class Actor is Map { }
@@ -16,14 +24,175 @@ BEGIN add-simple-accessors Actor, <
   type url user-view-type
 >;
 
-#- JSON::RepositoryEvent::GitHub::Tree -----------------------------------------
-class Tree is Map { }
-BEGIN add-simple-accessors Tree, <html-url sha url>;
+#- JSON::RepositoryEvent::GitHub::App ------------------------------------------
+class App is Map {
+    method owner()       { bless-hash-as Actor,       self<owner>       }
+    method permissions() { bless-hash-as Permissions, self<permissions> }
+}
+BEGIN add-simple-accessors App, <
+  client-id description external-url html-url id name node-id slug
+>;
+BEGIN add-list-accessors     App, <events>;
+BEGIN add-datetime-accessors App, <created-at updated-at>;
 
-#- JSON::RepositoryEvent::GitHub::Verification ---------------------------------
-class Verification is Map { }
-BEGIN add-simple-accessors   Verification, <payload reason signature verified>;
-BEGIN add-datetime-accessors Verification, <verified_at>;
+#- JSON::RepositoryEvent::GitHub::CheckRun::CheckRun ---------------------------
+class CheckRun::CheckRun is Map {
+    method app() { bless-hash-as App, self<app> }
+    method check-suite() {
+        bless-hash-as CheckSuite::CheckSuite, self<check_suite>
+    }
+    method output() { bless-hash-as Output, self<output> }
+}
+BEGIN add-simple-accessors CheckRun::CheckRun, <
+  conclusion details-url external-id head-sha html-url id name node-id
+  status url
+>;
+BEGIN add-list-accessors CheckRun::CheckRun, <pull-requests>;
+BEGIN add-datetime-accessors CheckRun::CheckRun, <completed-at started-at>;
+
+#- JSON::RepositoryEvent::GitHub::CheckSuite::CheckSuite -----------------------
+class CheckSuite::CheckSuite is Map {
+    method app()         { bless-hash-as App,        self<app>         }
+    method head-commit() { bless-hash-as PushCommit, self<head-commit> }
+}
+BEGIN add-simple-accessors CheckSuite::CheckSuite, <
+  after before check-runs-url conclusion head-branch head-sha id
+  latest-check-runs-count node-id rerequistable runs-rerequestable
+  status url
+>;
+BEGIN add-list-accessors     CheckSuite::CheckSuite, <pull-requests>;
+BEGIN add-datetime-accessors CheckSuite::CheckSuite, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::Comment --------------------------------------
+class Comment is Map {
+    method reactions() { bless-hash-as Reactions, self<reactions> }
+    method user()      { bless-hash-as Actor,     self<user> }
+}
+BEGIN add-simple-accessors Comment, <
+  author-association body commit-id html-url id line node-id path position 
+>;
+BEGIN add-datetime-accessors Comment, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::Commit ---------------------------------------
+class Commit is Map {
+    method author()    { bless-hash-as Actor,          self<author>        }
+    method commit()    { bless-hash-as PushCommit,     self<commit>        }
+    method committer() { bless-hash-as Actor,          self<committer>     }
+    method parents()   { bless-array-elements-as Tree, self<parents> // () }
+}
+BEGIN add-simple-accessors Commit, <comments-url html-url node-id sha url>;
+
+#- JSON::RepositoryEvent::GitHub::CommitComment --------------------------------
+class CommitComment is Map {
+    method comment()      { bless-hash-as Comment,      self<comment>      }
+    method organization() { bless-hash-as Organization, self<organization> }
+    method repository()   { bless-hash-as Repository,   self<repository>   }
+    method sender()       { bless-hash-as Actor,        self<sender>       }
+}
+BEGIN add-simple-accessors   CommitComment, <action>;
+BEGIN add-datetime-accessors CommitComment, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::Delete ---------------------------------------
+class Delete is Map {
+    method organization() { bless-hash-as Organization, self<organization> }
+    method repository()   { bless-hash-as Repository,   self<repository>   }
+    method sender()       { bless-hash-as Actor,        self<sender>       }
+}
+BEGIN add-simple-accessors Delete, <pusher-type ref ref-type>;
+
+#- JSON::RepositoryEvent::GitHub::DependenciesSummary --------------------------
+class DependenciesSummary is Map { }
+BEGIN add-simple-accessors DependenciesSummary, <
+  blocked-by blocking total-blocked-by total-blocking
+>;
+
+#- JSON::RepositoryEvent::GitHub::Issue ----------------------------------------
+class Issue is Map {
+    method issue-dependendencies-summary () {
+        bless-hash-as DependenciesSummary, self<issues_dependencies_summary>
+    }
+    method reactions () { bless-hash-as Reactions, self<reactions> }
+    method user ()      { bless-hash-as Actor,     self<user>      }
+}
+BEGIN add-simple-accessors Issue, <
+  active-lock-reason assignee author-association body comments
+  comments-url events-url html-url id labels-url locked milestone
+  node-id number performed-via-github-app pinned-comment repository-url
+  state state-reason timeline-url url
+>;
+BEGIN add-list-accessors Issue, <assignees issue-field-values labels>;
+BEGIN add-datetime-accessors Issue, <closed-at created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::IssueComment ---------------------------------
+class IssueComment is Map {
+    method comment()      { bless-hash-as Comment,      self<comment>      }
+    method issue()        { bless-hash-as Issue,        self<issue>        }
+    method organization() { bless-hash-as Organization, self<organization> }
+    method repository()   { bless-hash-as Repository,   self<repository>   }
+    method sender()       { bless-hash-as Actor,        self<sender>       }
+}
+BEGIN add-simple-accessors   IssueComment, <action>;
+BEGIN add-datetime-accessors IssueComment, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::License --------------------------------------
+class License is Map { }
+BEGIN add-simple-accessors License, <key name node-id spdx-id url>;
+
+#- JSON::RepositoryEvent::GitHub::Link -----------------------------------------
+class Link is Map { }
+BEGIN add-simple-accessors Link, <href>;
+
+#- JSON::RepositoryEvent::GitHub::Organization ---------------------------------
+class Organization is Map { }
+BEGIN add-simple-accessors Organization, <
+  avatar_url description events-url hooks-url if issues-url login
+  members-url node-id public-members-url repos-url url
+>;
+
+#- JSON::RepositoryEvent::GitHub::Output ---------------------------------------
+class Output is Map { }
+BEGIN add-simple-accessors Output, <
+  annotations-count annotations-url summary text title
+>;
+
+#- JSON::RepositoryEvent::GitHub::Permissions ----------------------------------
+class Permissions is Map { }
+BEGIN add-simple-accessors Permissions, <
+  actions administration artifact-metadata attestations checks code-quality
+  contents copilot-requests deployments discussions drives issues
+  merge-queues metadata models packages pages pull-requests repository-hooks
+  repository-projects security-events statuses vulnerabity-alerts
+>;
+
+#- JSON::RepositoryEvent::GitHub::Person ---------------------------------------
+class Person is Map { }
+BEGIN add-simple-accessors   Person, <email name username>;
+BEGIN add-datetime-accessors Person, <date>;
+
+#- JSON::RepositoryEvent::GitHub::PullRequest::PullRequest ---------------------
+class PullRequest::PullRequest is Map {
+    method _links()     { bless-array-elements-as Link, self<_links>     }
+    method base()       { bless-hash-as State,          self<base>       }
+    method head()       { bless-hash-as State,          self<head>       }
+    method merged-by()  { bless-hash-as Actor,          self<merged_by>  }
+    method user()       { bless-hash-as Actor,          self<user>       }
+    method repository() { bless-hash-as Repository,     self<repository> }
+    method sender()     { bless-hash-as Actor,          self<sender>     }
+}
+BEGIN add-simple-accessors PullRequest::PullRequest, <
+  active-lock-reason additions assignee author-association auto-merge
+  body changed-files comments comments-url commits commits-url deletions
+  diff-url draft html-url id issue-url locked maintainer-can-modify
+  merge-commit-sha mergeable mergeable-state merged milestone node-id
+  number patch-url rebaseable review-comment-url review-comments
+  review-comments-url state statuses-url title url
+>;
+BEGIN add-list-accessors PullRequest::PullRequest, <
+  assignees labels requested-reviewers requested-teams
+>;
+BEGIN add-datetime-accessors PullRequest::PullRequest, <
+  closed-at created-at merged-at updated-at
+>;
 
 #- JSON::RepositoryEvent::GitHub::PushCommit ---------------------------------
 # The data about a commit in a "push" payload
@@ -35,18 +204,14 @@ BEGIN add-simple-accessors   PushCommit, <distinct id message tree-id url>;
 BEGIN add-list-accessors     PushCommit, <added modified removed>;
 BEGIN add-datetime-accessors PushCommit, <timestamp>;
 
-#- JSON::RepositoryEvent::GitHub::TreeCommit ---------------------------------
-class TreeCommit is Map {
-    method author()       { bless-hash-as Person,        self<author>      }
-    method committer()    { bless-hash-as Person,        self<committer>   }
-    method tree()         { bless-hash-as Tree,          self<tree>        }
-    method verification() { bless-hash-as Verification, self<verification> }
+#- JSON::RepositoryEvent::GitHub::Reactions ------------------------------------
+class Reactions is Map {
+    method plus1()  { self<+1>  }
+    method minus1() { self<-1> }
 }
-BEGIN add-simple-accessors TreeCommit, <comment-count message url>;
-
-#- JSON::RepositoryEvent::GitHub::License --------------------------------------
-class License is Map { }
-BEGIN add-simple-accessors License, <key name node-id spdx-id url>;
+BEGIN add-simple-accessors Reactions, <
+  confused eyes heart hooray laugh rocket total-count url
+>;
 
 #- JSON::RepositoryEvent::GitHub::Repository -----------------------------------
 class Repository is Map {
@@ -72,12 +237,79 @@ BEGIN add-simple-accessors Repository, <
 BEGIN add-list-accessors     Repository, <topics>;
 BEGIN add-datetime-accessors Repository, <created-at pushed-at updated-at>;
 
+#- JSON::RepositoryEvent::GitHub::State ----------------------------------------
+class State is Map {
+    method repo() { bless-hash-as Repository, self<repo> }
+    method user() { bless-hash-as Actor,      self<user> }
+}
+BEGIN add-simple-accessors Link, <label ref sha>;
+
+#- JSON::RepositoryEvent::GitHub::Status ---------------------------------------
+class Status is Map {
+    method commit()       { bless-hash-as TreeCommit,   self<commit>       }
+    method organization() { bless-hash-as Organization, self<organization> }
+    method repository()   { bless-hash-as Repository,   self<repository>   }
+    method sender()       { bless-hash-as Actor,        self<sender>       }
+}
+BEGIN add-simple-accessors Status, <
+  avatar-url context description id name sha state target-url
+>;
+BEGIN add-list-accessors     Status, <branches>;
+BEGIN add-datetime-accessors Status, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::SubIssuesSummary -----------------------------
+class SubIssuesSummary is Map { }
+BEGIN add-simple-accessors SubIssuesSummary, <
+  complete percent-completed total
+>;
+
+#- JSON::RepositoryEvent::GitHub::Tree -----------------------------------------
+class Tree is Map { }
+BEGIN add-simple-accessors Tree, <html-url sha url>;
+
+#- JSON::RepositoryEvent::GitHub::TreeCommit ---------------------------------
+class TreeCommit is Map {
+    method author()       { bless-hash-as Person,        self<author>      }
+    method committer()    { bless-hash-as Person,        self<committer>   }
+    method tree()         { bless-hash-as Tree,          self<tree>        }
+    method verification() { bless-hash-as Verification, self<verification> }
+}
+BEGIN add-simple-accessors TreeCommit, <comment-count message url>;
+
+#- JSON::RepositoryEvent::GitHub::Verification ---------------------------------
+class Verification is Map { }
+BEGIN add-simple-accessors   Verification, <payload reason signature verified>;
+BEGIN add-datetime-accessors Verification, <verified_at>;
+
 #- JSON::RepositoryEvent::GitHub::Workflow -------------------------------------
 class Workflow is Map { }
 BEGIN add-simple-accessors Workflow, <
   badge-url html-url id name node-id path state url
 >;
 BEGIN add-datetime-accessors Workflow, <created-at updated-at>;
+
+#- JSON::RepositoryEvent::GitHub::WorkflowJob::Step ----------------------------
+class WorkflowJob::Step is Map { }
+BEGIN add-simple-accessors WorkflowJob::Step, <
+  conclusion name number status
+>;
+BEGIN add-datetime-accessors WorkflowJob::Step, <completed-at started-at>;
+
+#- JSON::RepositoryEvent::GitHub::WorkflowJob::WorkflowJob ---------------------
+class WorkflowJob::WorkflowJob is Map {
+    method steps() {
+        bless-array-elements-as WorkflowJob::Step, self<steps> // ()
+    }
+}
+BEGIN add-simple-accessors WorkflowJob::WorkflowJob, <
+  check-run-url conclusion head-branch head-sha html-url id name
+  node-id run-attempt run-id run-url runner-group-id runner-group-name
+  runner-id runner-name status url workflow-name
+>;
+BEGIN add-list-accessors WorkflowJob::WorkflowJob, <labels>;
+BEGIN add-datetime-accessors WorkflowJob::WorkflowJob, <
+  completed-at created-at started-at
+>;
 
 #- JSON::RepositoryEvent::GitHub::WorkflowRun::WorkflowRun ---------------------
 class WorkflowRun::WorkflowRun is Map {
@@ -110,224 +342,9 @@ BEGIN add-datetime-accessors WorkflowRun::WorkflowRun, <
   created-at run-started-at updated-at
 >;
 
-#- JSON::RepositoryEvent::GitHub::WorkflowJob::Step ----------------------------
-class WorkflowJob::Step is Map { }
-BEGIN add-simple-accessors WorkflowJob::Step, <
-  conclusion name number status
->;
-BEGIN add-datetime-accessors WorkflowJob::Step, <completed-at started-at>;
-
-#- JSON::RepositoryEvent::GitHub::WorkflowJob::WorkflowJob ---------------------
-class WorkflowJob::WorkflowJob is Map {
-    method steps() {
-        bless-array-elements-as WorkflowJob::Step, self<steps> // ()
-    }
-}
-BEGIN add-simple-accessors WorkflowJob::WorkflowJob, <
-  check-run-url conclusion head-branch head-sha html-url id name
-  node-id run-attempt run-id run-url runner-group-id runner-group-name
-  runner-id runner-name status url workflow-name
->;
-BEGIN add-list-accessors WorkflowJob::WorkflowJob, <labels>;
-BEGIN add-datetime-accessors WorkflowJob::WorkflowJob, <
-  completed-at created-at started-at
->;
-
-#- JSON::RepositoryEvent::GitHub::Permissions ----------------------------------
-class Permissions is Map { }
-BEGIN add-simple-accessors Permissions, <
-  actions administration artifact-metadata attestations checks code-quality
-  contents copilot-requests deployments discussions drives issues
-  merge-queues metadata models packages pages pull-requests repository-hooks
-  repository-projects security-events statuses vulnerabity-alerts
->;
-
-#- JSON::RepositoryEvent::GitHub::App ------------------------------------------
-class App is Map {
-    method owner()       { bless-hash-as Actor,       self<owner>       }
-    method permissions() { bless-hash-as Permissions, self<permissions> }
-}
-BEGIN add-simple-accessors App, <
-  client-id description external-url html-url id name node-id slug
->;
-BEGIN add-list-accessors     App, <events>;
-BEGIN add-datetime-accessors App, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::CheckSuite::CheckSuite -----------------------
-class CheckSuite::CheckSuite is Map {
-    method app()         { bless-hash-as App,        self<app>         }
-    method head-commit() { bless-hash-as PushCommit, self<head-commit> }
-}
-BEGIN add-simple-accessors CheckSuite::CheckSuite, <
-  after before check-runs-url conclusion head-branch head-sha id
-  latest-check-runs-count node-id rerequistable runs-rerequestable
-  status url
->;
-BEGIN add-list-accessors     CheckSuite::CheckSuite, <pull-requests>;
-BEGIN add-datetime-accessors CheckSuite::CheckSuite, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::Output ---------------------------------------
-class Output is Map { }
-BEGIN add-simple-accessors Output, <
-  annotations-count annotations-url summary text title
->;
-
-#- JSON::RepositoryEvent::GitHub::CheckRun::CheckRun ---------------------------
-class CheckRun::CheckRun is Map {
-    method app() { bless-hash-as App, self<app> }
-    method check-suite() {
-        bless-hash-as CheckSuite::CheckSuite, self<check_suite>
-    }
-    method output() { bless-hash-as Output, self<output> }
-}
-BEGIN add-simple-accessors CheckRun::CheckRun, <
-  conclusion details-url external-id head-sha html-url id name node-id
-  status url
->;
-BEGIN add-list-accessors CheckRun::CheckRun, <pull-requests>;
-BEGIN add-datetime-accessors CheckRun::CheckRun, <completed-at started-at>;
-
-#- JSON::RepositoryEvent::GitHub::Organization ---------------------------------
-class Organization is Map { }
-BEGIN add-simple-accessors Organization, <
-  avatar_url description events-url hooks-url if issues-url login
-  members-url node-id public-members-url repos-url url
->;
-
-#- JSON::RepositoryEvent::GitHub::Commit ---------------------------------------
-class Commit is Map {
-    method author()    { bless-hash-as Actor,          self<author>        }
-    method commit()    { bless-hash-as PushCommit,     self<commit>        }
-    method committer() { bless-hash-as Actor,          self<committer>     }
-    method parents()   { bless-array-elements-as Tree, self<parents> // () }
-}
-BEGIN add-simple-accessors Commit, <comments-url html-url node-id sha url>;
-
-#- JSON::RepositoryEvent::GitHub::Status ---------------------------------------
-class Status is Map {
-    method commit()       { bless-hash-as TreeCommit,   self<commit>       }
-    method organization() { bless-hash-as Organization, self<organization> }
-    method repository()   { bless-hash-as Repository,   self<repository>   }
-    method sender()       { bless-hash-as Actor,        self<sender>       }
-}
-BEGIN add-simple-accessors Status, <
-  avatar-url context description id name sha state target-url
->;
-BEGIN add-list-accessors     Status, <branches>;
-BEGIN add-datetime-accessors Status, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::Reactions ------------------------------------
-class Reactions is Map {
-    method plus1()  { self<+1>  }
-    method minus1() { self<-1> }
-}
-BEGIN add-simple-accessors Reactions, <
-  confused eyes heart hooray laugh rocket total-count url
->;
-
-#- JSON::RepositoryEvent::GitHub::Comment --------------------------------------
-class Comment is Map {
-    method reactions() { bless-hash-as Reactions, self<reactions> }
-    method user()      { bless-hash-as Actor,     self<user> }
-}
-BEGIN add-simple-accessors Comment, <
-  author-association body commit-id html-url id line node-id path position 
->;
-BEGIN add-datetime-accessors Comment, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::CommitComment --------------------------------
-class CommitComment is Map {
-    method comment()      { bless-hash-as Comment,      self<comment>      }
-    method organization() { bless-hash-as Organization, self<organization> }
-    method repository()   { bless-hash-as Repository,   self<repository>   }
-    method sender()       { bless-hash-as Actor,        self<sender>       }
-}
-BEGIN add-simple-accessors   CommitComment, <action>;
-BEGIN add-datetime-accessors CommitComment, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::DependenciesSummary --------------------------
-class DependenciesSummary is Map { }
-BEGIN add-simple-accessors DependenciesSummary, <
-  blocked-by blocking total-blocked-by total-blocking
->;
-
-#- JSON::RepositoryEvent::GitHub::SubIssuesSummary -----------------------------
-class SubIssuesSummary is Map { }
-BEGIN add-simple-accessors SubIssuesSummary, <
-  complete percent-completed total
->;
-
-#- JSON::RepositoryEvent::GitHub::Issue ----------------------------------------
-class Issue is Map {
-    method issue-dependendencies-summary () {
-        bless-hash-as DependenciesSummary, self<issues_dependencies_summary>
-    }
-    method reactions () { bless-hash-as Reactions, self<reactions> }
-    method user ()      { bless-hash-as Actor,     self<user>      }
-}
-BEGIN add-simple-accessors Issue, <
-  active-lock-reason assignee author-association body comments
-  comments-url events-url html-url id labels-url locked milestone
-  node-id number performed-via-github-app pinned-comment repository-url
-  state state-reason timeline-url url
->;
-BEGIN add-list-accessors Issue, <assignees issue-field-values labels>;
-BEGIN add-datetime-accessors Issue, <closed-at created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::IssueComment ---------------------------------
-class IssueComment is Map {
-    method comment()      { bless-hash-as Comment,      self<comment>      }
-    method issue()        { bless-hash-as Issue,        self<issue>        }
-    method organization() { bless-hash-as Organization, self<organization> }
-    method repository()   { bless-hash-as Repository,   self<repository>   }
-    method sender()       { bless-hash-as Actor,        self<sender>       }
-}
-BEGIN add-simple-accessors   IssueComment, <action>;
-BEGIN add-datetime-accessors IssueComment, <created-at updated-at>;
-
-#- JSON::RepositoryEvent::GitHub::Delete ---------------------------------------
-class Delete is Map {
-    method organization() { bless-hash-as Organization, self<organization> }
-    method repository()   { bless-hash-as Repository,   self<repository>   }
-    method sender()       { bless-hash-as Actor,        self<sender>       }
-}
-BEGIN add-simple-accessors Delete, <pusher-type ref ref-type>;
-
-#- JSON::RepositoryEvent::GitHub::Link -----------------------------------------
-class Link is Map { }
-BEGIN add-simple-accessors Link, <href>;
-
-#- JSON::RepositoryEvent::GitHub::State ----------------------------------------
-class State is Map {
-    method repo() { bless-hash-as Repository, self<repo> }
-    method user() { bless-hash-as Actor,      self<user> }
-}
-BEGIN add-simple-accessors Link, <label ref sha>;
-
-#- JSON::RepositoryEvent::GitHub::PullRequest::PullRequest ---------------------
-class PullRequest::PullRequest is Map {
-    method _links()     { bless-array-elements-as Link, self<_links>     }
-    method base()       { bless-hash-as State,          self<base>       }
-    method head()       { bless-hash-as State,          self<head>       }
-    method merged-by()  { bless-hash-as Actor,          self<merged_by>  }
-    method user()       { bless-hash-as Actor,          self<user>       }
-    method repository() { bless-hash-as Repository,     self<repository> }
-    method sender()     { bless-hash-as Actor,          self<sender>     }
-}
-BEGIN add-simple-accessors PullRequest::PullRequest, <
-  active-lock-reason additions assignee author-association auto-merge
-  body changed-files comments comments-url commits commits-url deletions
-  diff-url draft html-url id issue-url locked maintainer-can-modify
-  merge-commit-sha mergeable mergeable-state merged milestone node-id
-  number patch-url rebaseable review-comment-url review-comments
-  review-comments-url state statuses-url title url
->;
-BEGIN add-list-accessors PullRequest::PullRequest, <
-  assignees labels requested-reviewers requested-teams
->;
-BEGIN add-datetime-accessors PullRequest::PullRequest, <
-  closed-at created-at merged-at updated-at
->;
+# ⬆⬆ classes for elements of payloads
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ⬇⬇ actual payload classes
 
 #- JSON::RepositoryEvent::GitHub::CheckRun -------------------------------------
 class CheckRun is Map {

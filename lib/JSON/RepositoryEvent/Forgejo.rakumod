@@ -2,9 +2,11 @@ use JSON::RepositoryEvent::Helpers;
 
 unit package JSON::RepositoryEvent::Forgejo;
 
-#- JSON::RepositoryEvent::Forgejo::Person --------------------------------------
-class Person is Map { }
-BEGIN add-simple-accessors Person, <email name username>;
+# Define stubs for forward references in alphabetically ordered
+# list of helper classes
+class Person     { ... }
+class Repository { ... }
+class Tracker    { ... }
 
 #- JSON::RepositoryEvent::Forgejo::Actor ---------------------------------------
 class Actor is Map { }
@@ -16,17 +18,6 @@ BEGIN add-simple-accessors Actor, <
 >;
 BEGIN add-datetime-accessors Actor, <created last-login>;
 
-#- JSON::RepositoryEvent::Forgejo::Tracker -------------------------------------
-class Tracker is Map { }
-BEGIN add-simple-accessors Tracker, <
-  allow-only-contributors-to_track-time enable-issue-dependencies
-  enable_time_tracker
->;
-
-#- JSON::RepositoryEvent::Forgejo::Permissions ---------------------------------
-class Permissions is Map { }
-BEGIN add-simple-accessors Permissions, <admin pull push>;
-
 #- JSON::RepositoryEvent::Forgejo::Commit --------------------------------------
 class Commit is Map {
     method author()    { bless-hash-as Person, self<author>    }
@@ -35,6 +26,27 @@ class Commit is Map {
 BEGIN add-simple-accessors   Commit, <id message url verification>;
 BEGIN add-list-accessors     Commit, <added modified removed >;
 BEGIN add-datetime-accessors Commit, <timestamp>;
+
+#- JSON::RepositoryEvent::Forgejo::Issue ---------------------------------------
+class Issue is Map {
+    method repository() { bless-hash-as Repository, self<repository> }
+    method user()       { bless-hash-as Actor,      self<user>       }
+}
+BEGIN add-simple-accessors Issue, <
+  assignee assignees body comments due-date html-url id is-locked milestone
+  number original-author original-author-id pin-orer pull-request ref state
+  title url
+>;
+BEGIN add-list-accessors     Issue, <assets labels>;
+BEGIN add-datetime-accessors Issue, <closed-at created-at updated-at>;
+
+#- JSON::RepositoryEvent::Forgejo::Permissions ---------------------------------
+class Permissions is Map { }
+BEGIN add-simple-accessors Permissions, <admin pull push>;
+
+#- JSON::RepositoryEvent::Forgejo::Person --------------------------------------
+class Person is Map { }
+BEGIN add-simple-accessors Person, <email name username>;
 
 #- JSON::RepositoryEvent::Forgejo::Repository ----------------------------------
 class Repository is Map {
@@ -64,18 +76,16 @@ BEGIN add-datetime-accessors Repository, <
   archived-at created-at mirror-updated updated-at
 >;
 
-#- JSON::RepositoryEvent::Forgejo::Issue ---------------------------------------
-class Issue is Map {
-    method repository() { bless-hash-as Repository, self<repository> }
-    method user()       { bless-hash-as Actor,      self<user>       }
-}
-BEGIN add-simple-accessors Issue, <
-  assignee assignees body comments due-date html-url id is-locked milestone
-  number original-author original-author-id pin-orer pull-request ref state
-  title url
+#- JSON::RepositoryEvent::Forgejo::Tracker -------------------------------------
+class Tracker is Map { }
+BEGIN add-simple-accessors Tracker, <
+  allow-only-contributors-to_track-time enable-issue-dependencies
+  enable_time_tracker
 >;
-BEGIN add-list-accessors     Issue, <assets labels>;
-BEGIN add-datetime-accessors Issue, <closed-at created-at updated-at>;
+
+# ⬆⬆ classes for elements of payloads
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ⬇⬇ actual payload classes
 
 #- JSON::RepositoryEvent::Forgejo::Issues --------------------------------------
 class Issues is Map {
