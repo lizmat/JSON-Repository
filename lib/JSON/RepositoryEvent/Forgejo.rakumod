@@ -161,7 +161,7 @@ class EventIssues is Map {
         my constant %description =
           assigned      => "An issue was assigned to a user.",
           closed        => "An issue was closed.",
-          deleted       => "An issue was  deleted.",
+          deleted       => "An issue was deleted.",
           demilestoned  => "An issue was removed from a milestone.",
           edited        => "The title or body on an issue was edited.",
           field_added   => "An issue field value was set or updated on an issue.",

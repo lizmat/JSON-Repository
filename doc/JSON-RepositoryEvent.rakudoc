@@ -856,7 +856,7 @@ not mentioned here in the documentation for convenience.
 
 =item assets - List
 =item assignee
-=item assignees
+=item assignees - List
 =item body
 =item closed-at - DateTime
 =item created-at - DateTime

@@ -1413,7 +1413,7 @@ Forgejo::Issue
 
   * assignee
 
-  * assignees
+  * assignees - List
 
   * body
 

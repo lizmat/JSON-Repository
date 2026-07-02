@@ -4,7 +4,7 @@
   "specVersion": "1.6",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-07-01T14:52:17+00:00",
+    "timestamp": "2026-07-02T21:29:50+00:00",
     "lifecycles": [
       {
         "phase": "pre-build"
@@ -19,7 +19,7 @@
     "component": {
       "type": "library",
       "mime-type": "text/plain",
-      "bom-ref": "pkg:raku/zef:lizmat/JSON::RepositoryEvent@0.0.2",
+      "bom-ref": "pkg:raku/zef:lizmat/JSON::RepositoryEvent@0.0.3",
       "authors": [
         {
           "bom-ref": "ElizabethMattijsen",
@@ -29,7 +29,7 @@
       "publisher": "zef",
       "group": "zef:lizmat",
       "name": "JSON::RepositoryEvent",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "description": "Representation of a repository event",
       "scope": "required",
       "licenses": [
@@ -41,14 +41,14 @@
           }
         }
       ],
-      "purl": "pkg:raku/zef:lizmat/JSON::RepositoryEvent@0.0.2",
+      "purl": "pkg:raku/zef:lizmat/JSON::RepositoryEvent@0.0.3",
       "externalReferences": [
         {
           "url": "https://codeberg.org/lizmat/JSON-RepositoryEvent",
           "type": "distribution"
         },
         {
-          "url": "https://raku.land/zef:lizmat/JSON::RepositoryEvent?v=0.0.2",
+          "url": "https://raku.land/zef:lizmat/JSON::RepositoryEvent?v=0.0.3",
           "type": "documentation"
         },
         {
@@ -241,7 +241,7 @@
       "type": "distribution"
     },
     {
-      "url": "https://raku.land/zef:lizmat/JSON::RepositoryEvent?v=0.0.2",
+      "url": "https://raku.land/zef:lizmat/JSON::RepositoryEvent?v=0.0.3",
       "type": "documentation"
     },
     {
